@@ -1,0 +1,8 @@
+{
+  "PORT": 3000,
+  "PLACE_ID": "",
+  "JOB_ID": "",
+  "HEALTHCHECK_INTERVAL_MS": 300000,
+  "MAX_RETRIES": 5,
+  "STREAM_REFRESH_MS": 50
+}

@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MAPLE</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍁</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #f7f5ee;       
+            --bg-panel: #ffffff;      
+            --bg-alt: #f3f1e8;
+            --border-color: #e2dfd3;  
+            --text-main: #1f1f1d;     
+            --text-muted: #6b7a6e;    
+            
+            --primary: #356b3e;       
+            --primary-hover: #264f2d; 
+            --danger: #d94b4b;        
+            --danger-hover: #b93d3d;
+            --warning: #d99a06;
+
+            --radius-panel: 0px;
+            --radius-btn: 0px;
+            --radius-card: 0px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            display: grid;
+            grid-template-columns: 260px 1fr 340px;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .panel {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-panel);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column; 
+            min-height: 0;
+        }
+
+        .section-header {
+            font-size: 0.65rem; 
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-btn);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem; 
+            font-weight: 600;
+            color: var(--text-main);
+            background-color: var(--bg-alt);
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn:hover { filter: brightness(0.95); }
+
+        .btn-white {
+            background-color: #ffffff;
+        }
+        .btn-white:hover { background-color: var(--bg-alt); }
+
+        .btn-primary { 
+            background-color: var(--primary); 
+            color: white; 
+            border-color: var(--primary);
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        
+        .btn-large {
+            font-size: 0.9rem; 
+            padding: 0.65rem 0.75rem;
+        }
+        
+        .input-field {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-btn);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            background-color: var(--bg-alt);
+            color: var(--text-main);
+            outline: none;
+            width: 100%;
+        }
+        .input-field:focus {
+            border-color: var(--primary);
+        }
+        .input-field::placeholder {
+            text-align: center;
+        }
+        .input-field:focus::placeholder {
+            color: transparent;
+        }
+        #inputPlaceId, #inputJobId {
+            font-size: 0.6rem;
+            text-align: center;
+        }
+
+        .status-box {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-alt);
+            margin-bottom: 1.5rem;
+        }
+        .status-box .value {
+            font-weight: 600;
+            font-size: 0.8rem; 
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--text-muted);
+            border-radius: 0px;
+        }
+        .status-dot.connected { background-color: #3b82f6; } 
+        .status-dot.running { background-color: var(--primary); } 
+        .status-dot.disconnected { background-color: var(--danger); }
+        .status-dot.warning { background-color: var(--warning); }
+
+        .controls-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .controls-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .account-grid-wrapper {
+            position: relative;
+            flex: 1;
+            margin-bottom: -0.5rem; 
+        }
+
+        .account-grid {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .account-grid::-webkit-scrollbar { width: 6px; }
+        .account-grid::-webkit-scrollbar-track { background: var(--bg-alt); }
+        .account-grid::-webkit-scrollbar-thumb { background: var(--border-color); }
+        .account-grid::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .account-card {
+            background-color: var(--bg-alt);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-card);
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            height: max-content; 
+        }
+
+        .account-name {
+            font-size: 0.75rem; 
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+
+        .stream-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .stream-wrapper {
+            background-color: #000;
+            border: 1px solid var(--text-main);
+            width: 100%;
+            aspect-ratio: 9 / 16;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            position: relative;
+            touch-action: none;
+        }
+
+        .stream-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.5);
+            font-size: 0.65rem;
+            display: none; 
+        }
+
+        @media (max-width: 1024px) {
+            .container { grid-template-columns: 240px 1fr; }
+            .stream-panel { grid-column: 1 / -1; }
+        }
+        
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            background-color: var(--bg-panel);
+            border: none;
+            outline: 1px solid #000;
+            padding: 0.75rem 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-main);
+            width: 340px;
+            max-width: none;
+            box-sizing: border-box;
+            word-break: break-word;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateX(120%);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+        }
+        .toast.visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .toast.hiding {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+        .toast-icon {
+            flex-shrink: 0;
+            width: 8px;
+            height: 8px;
+            margin-top: 3px;
+        }
+        .toast.toast-success { border-left: 3px solid var(--primary); }
+        .toast.toast-success .toast-icon { background-color: var(--primary); }
+        .toast.toast-error { border-left: 3px solid var(--danger); }
+        .toast.toast-error .toast-icon { background-color: var(--danger); }
+        .toast.toast-warning { border-left: 3px solid var(--warning); }
+        .toast.toast-warning .toast-icon { background-color: var(--warning); }
+
+        .confirm-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(31, 31, 29, 0.4);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .confirm-overlay.visible { opacity: 1; }
+
+        .confirm-dialog {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            width: 340px;
+            max-width: 90vw;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            transform: scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .confirm-overlay.visible .confirm-dialog { transform: scale(1); }
+
+        .confirm-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .confirm-message {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-main);
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+        .confirm-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        
+        <div class="panel" style="align-self: start;">
+            <div class="section-header">System</div>
+            
+            <div class="status-box">
+                <div class="section-header" style="border:none; margin:0; padding:0; font-size: 0.6rem;">Status</div>
+                <div class="value">
+                    <div class="status-dot disconnected" id="statusDot"></div>
+                    <span id="statusText" style="color:var(--danger);">Disconnected</span>
+                </div>
+            </div>
+
+            <div class="section-header">Account Management</div>
+            <div class="controls-group">
+                <button class="btn" id="btnLogin" onclick="startLoginPhase()">Login</button>
+                <button class="btn btn-danger" id="btnCancelLogin" style="display: none;" onclick="stopAutomation()">Cancel</button>
+                <button class="btn" onclick="saveAccount()">Save Account</button>
+            </div>
+
+            <div class="section-header">Game Target</div>
+            <div class="controls-group" style="flex-direction:row; gap: 0.5rem; align-items: stretch;">
+                <input type="text" id="inputPlaceId" class="input-field" placeholder="Place ID" style="flex:1; margin: 0;">
+                <button class="btn" style="color: black; width: auto; margin: 0; padding-left: 1.5rem; padding-right: 1.5rem;" onclick="setTarget('place')">SET</button>
+            </div>
+            <div class="controls-group" style="flex-direction:row; gap: 0.5rem; align-items: stretch;">
+                <input type="text" id="inputJobId" class="input-field" placeholder="Job ID (Optional)" style="flex:1; margin: 0;">
+                <button class="btn" style="color: black; width: auto; margin: 0; padding-left: 1.5rem; padding-right: 1.5rem;" onclick="setTarget('job')">SET</button>
+            </div>
+
+            <div class="section-header">Automation</div>
+            <div class="controls-group">
+                <button class="btn btn-primary btn-large" id="btnStart" onclick="startAutomation()">Start</button>
+                <button class="btn btn-danger btn-large" style="display: none;" id="btnStop" onclick="stopAutomation()">Stop</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="section-header" style="display:flex; justify-content:space-between;">
+                <span>Vault Database</span>
+                <span id="vaultCount">0 Entries</span>
+            </div>
+            
+            <div class="account-grid-wrapper">
+                <div class="account-grid">
+                </div>
+            </div>
+        </div>
+
+        <div class="panel stream-panel">
+            <div class="section-header" style="display:flex; justify-content:space-between;">
+                <span>Cloud Stream</span>
+                <span id="streamIndicator" style="color:var(--text-muted);">OFFLINE</span>
+            </div>
+            
+            <div class="stream-container">
+                <div class="stream-wrapper" id="videoFeed">
+
+                    <div id="videoMessage" style="text-align: center; padding: 1rem; color: #6b7a6e; font-size: 0.8rem; z-index: 2;">
+                        OFFLINE
+                    </div>
+
+                    <div id="streamImageContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 1;"></div>
+                </div>
+                
+                <div class="controls-group" style="margin-top: 1rem; flex-direction:row; margin-bottom:0;">
+                    <button class="btn" title="Back" onclick="fetch('/api/nav/back', { method: 'POST' })">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
+                            <polygon points="15 6, 15 18, 5 12" />
+                        </svg>
+                    </button>
+                    <button class="btn" title="Home" onclick="fetch('/api/nav/home', { method: 'POST' })">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="8"></circle>
+                        </svg>
+                    </button>
+                    <button class="btn" title="Recents" onclick="fetch('/api/nav/recents', { method: 'POST' })">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect>
+                        </svg>
+                    </button>
+                </div>
+                <div class="controls-group" style="margin-top: 1rem; flex-direction:row; margin-bottom:0; gap: 0.5rem; align-items: stretch;">
+                    <input type="text" id="keyboardInput" class="input-field" placeholder="< / >" style="flex:1; margin: 0;">
+                    <button class="btn" style="color: black; width: auto; margin: 0; padding-left: 1.5rem; padding-right: 1.5rem;" onclick="sendText()">SEND</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            const icon = document.createElement('div');
+            icon.className = 'toast-icon';
+            const textSpan = document.createElement('span');
+            textSpan.textContent = message;
+            toast.appendChild(icon);
+            toast.appendChild(textSpan);
+            
+            container.appendChild(toast);
+            
+            // Force DOM reflow so the transition animates instead of instantly appearing
+            void toast.offsetHeight;
+            
+            toast.classList.add('visible');
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                toast.classList.add('hiding');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 3500);
+        }
+
+        function showConfirm(message, confirmText = 'Confirm') {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'confirm-overlay';
+                
+                // Construct safely to prevent XSS
+                overlay.innerHTML = `
+                    <div class="confirm-dialog">
+                        <div class="confirm-title">Confirm</div>
+                        <div class="confirm-message" id="confirmMessageText"></div>
+                        <div class="confirm-actions">
+                            <button class="btn btn-danger" id="confirmYes">${confirmText}</button>
+                            <button class="btn btn-white" id="confirmNo">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                overlay.querySelector('#confirmMessageText').textContent = message;
+                
+                document.body.appendChild(overlay);
+                void overlay.offsetHeight; // Force reflow
+                overlay.classList.add('visible');
+
+                const close = (result) => {
+                    overlay.classList.remove('visible');
+                    overlay.addEventListener('transitionend', () => overlay.remove());
+                    resolve(result);
+                };
+                overlay.querySelector('#confirmYes').onclick = () => close(true);
+                overlay.querySelector('#confirmNo').onclick = () => close(false);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+            });
+        }
+
+        function sendText() {
+            const input = document.getElementById('keyboardInput');
+            if (input.value) {
+                fetch('/api/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: input.value }) });
+                input.value = '';
+            }
+        }
+    </script>
+    <script>
+        const API_BASE = '/api';
+        let ws = null;
+        let isStreaming = false;
+        let isStreamActive = false;
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/status`);
+                const status = await res.json();
+                updateStatusUI(status);
+                if (status.accounts) renderVault(status.accounts);
+            } catch (err) {
+                setDisconnected();
+            }
+        }
+
+        function updateStatusUI(status) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (status.isRunning) {
+                if (status.isConnecting) {
+                    dot.className = 'status-dot warning';
+                    text.innerText = 'Connecting...';
+                    text.style.color = 'var(--warning)';
+                } else {
+                    dot.className = 'status-dot running';
+                    text.innerText = 'Running';
+                    text.style.color = 'var(--primary)';
+                }
+                document.getElementById('btnStart').style.display = 'none';
+                document.getElementById('btnStop').style.display = 'flex';
+                document.getElementById('btnLogin').style.display = 'flex';
+                document.getElementById('btnCancelLogin').style.display = 'none';
+                if (status.isManualLaunch) {
+                    startStream();
+                } else {
+                    stopStream();
+                }
+            } else if (status.isLoginMode) {
+                dot.className = 'status-dot warning';
+                text.innerText = 'Login Mode';
+                text.style.color = 'var(--warning)';
+                
+                document.getElementById('btnStart').style.display = 'flex';
+                document.getElementById('btnStop').style.display = 'none';
+                document.getElementById('btnLogin').style.display = 'none';
+                document.getElementById('btnCancelLogin').style.display = 'flex';
+                startStream();
+            } else {
+                setDisconnected();
+            }
+            if (document.activeElement !== document.getElementById('inputPlaceId')) {
+                document.getElementById('inputPlaceId').value = status.placeId || '';
+            }
+            if (document.activeElement !== document.getElementById('inputJobId')) {
+                document.getElementById('inputJobId').value = status.jobId || '';
+            }
+
+        }
+
+        function setDisconnected() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            dot.className = 'status-dot disconnected';
+            text.innerText = 'Disconnected';
+            text.style.color = 'var(--danger)';
+            
+            document.getElementById('btnStart').style.display = 'flex';
+            document.getElementById('btnStop').style.display = 'none';
+            document.getElementById('btnLogin').style.display = 'flex';
+            document.getElementById('btnCancelLogin').style.display = 'none';
+            stopStream();
+        }
+
+        async function setTarget(type) {
+            let targetValue = '';
+            if (type === 'place') targetValue = document.getElementById('inputPlaceId').value;
+            if (type === 'job') targetValue = document.getElementById('inputJobId').value;
+            
+            try {
+                const res = await fetch(`${API_BASE}/set_target`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, value: targetValue })
+                });
+                const data = await res.json();
+                if (!res.ok) showToast('Error: ' + (data.error || 'Unknown error'));
+            } catch(err) {
+                showToast('Error setting target: ' + err.message);
+            }
+            fetchStatus();
+        }
+
+        async function startAutomation() {
+            if (!document.getElementById('inputPlaceId').value || document.getElementById('inputPlaceId').value.trim() === '') {
+                showToast('A Place ID is required before starting!', 'warning');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/start`, { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) {
+                    showToast('Error starting: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                showToast('Connection error: ' + err.message);
+            }
+            fetchStatus();
+        }
+
+        async function stopAutomation() {
+            await fetch(`${API_BASE}/kill`, { method: 'POST' });
+            fetchStatus();
+        }
+
+        async function cycleAccount() {
+            await fetch(`${API_BASE}/cycle`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: 'Manual Drop' })
+            });
+            fetchStatus();
+        }
+
+        async function startLoginPhase() {
+            try {
+                const res = await fetch(`${API_BASE}/login_mode`, { method: 'POST' });
+                startStream();
+                fetchStatus();
+            } catch(err) {
+                showToast('Error sending login request: ' + err.message);
+            }
+        }
+
+        async function saveAccount() {
+            const text = document.getElementById('statusText');
+            const dot = document.getElementById('statusDot');
+            
+            text.innerText = 'Extracting...';
+            text.style.color = 'var(--warning)';
+            dot.className = 'status-dot warning';
+
+            try {
+                const res = await fetch(`${API_BASE}/save_account`, { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Account saved: ${data.username}`, 'success');
+                } else {
+                    showToast(`Error: ${data.error}`);
+                }
+            } catch (err) {
+                showToast('Network error while saving account');
+            }
+            fetchStatus();
+        }
+
+        async function launchAccount(username) {
+            if (!document.getElementById('inputPlaceId').value || document.getElementById('inputPlaceId').value.trim() === '') {
+                showToast('A Place ID is required before launching!', 'warning');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/launch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                const data = await res.json();
+                if (!res.ok) showToast('Error: ' + (data.error || 'Unknown error'));
+            } catch (err) {
+                showToast('Connection error: ' + err.message);
+            }
+            fetchStatus();
+        }
+
+        async function dropAccount(username) {
+            if (!(await showConfirm(`Are you sure you want to drop ${username}?`, 'Drop'))) return;
+            try {
+                const res = await fetch(`${API_BASE}/drop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                const data = await res.json();
+                if (!res.ok) showToast('Error: ' + (data.error || 'Unknown error'));
+            } catch (err) {
+                showToast('Connection error: ' + err.message);
+            }
+            fetchStatus();
+        }
+
+        function renderVault(accounts) {
+            const grid = document.querySelector('.account-grid');
+            grid.innerHTML = '';
+            
+            document.getElementById('vaultCount').innerText = `${accounts.length} Entries`;
+
+            accounts.forEach(account => {
+                const card = document.createElement('div');
+                card.className = 'account-card';
+                if (account.isActive) card.style.borderColor = 'var(--primary)';
+                if (account.isFailed) card.style.borderColor = 'var(--danger)';
+                
+                card.innerHTML = `
+                    <div class="account-name" style="color: ${account.isFailed ? 'var(--danger)' : (account.isActive ? 'var(--primary)' : 'var(--text-main)')}">${account.username}</div>
+                    <div class="card-actions">
+                        ${account.isManualLaunch ? 
+                            `<button class="btn btn-danger" onclick="stopAutomation()">Stop</button>` :
+                            `<button class="btn btn-white" onclick="launchAccount('${account.username}')">Launch</button>`
+                        }
+                        <button class="btn btn-white" onclick="dropAccount('${account.username}')">Drop</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function startStream() {
+            if (isStreamActive) return;
+            isStreamActive = true;
+            
+            document.getElementById('videoMessage').style.display = 'none';
+            document.getElementById('streamIndicator').innerText = 'LIVE';
+            document.getElementById('streamIndicator').style.color = 'var(--primary)';
+
+            
+            const container = document.getElementById('streamImageContainer');
+            container.innerHTML = '';
+            let img = document.createElement('img');
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            img.style.pointerEvents = 'none';
+            img.style.touchAction = 'none';
+            img.draggable = false;
+            container.appendChild(img);
+            
+            let pointerDownPos = null;
+            let pointerDownTime = null;
+
+            if (!container.dataset.listeners) {
+                container.dataset.listeners = 'true';
+                
+                container.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width;
+                const y = (event.clientY - rect.top) / rect.height;
+                pointerDownPos = { x, y };
+                pointerDownTime = Date.now();
+            });
+
+            container.addEventListener('pointerup', (event) => {
+                event.preventDefault();
+                if (!pointerDownPos) return;
+                const rect = container.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width;
+                const y = (event.clientY - rect.top) / rect.height;
+                const duration = Date.now() - pointerDownTime;
+                
+                const deltaX = Math.abs(x - pointerDownPos.x);
+                const deltaY = Math.abs(y - pointerDownPos.y);
+                
+                if (deltaX < 0.05 && deltaY < 0.05) {
+                    fetch('/api/touch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ x, y }) });
+                } else {
+                    fetch('/api/swipe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ startX: pointerDownPos.x, startY: pointerDownPos.y, endX: x, endY: y, duration }) });
+                }
+                pointerDownPos = null;
+            });
+            
+            container.addEventListener('pointercancel', (event) => {
+                pointerDownPos = null;
+            });
+            }
+            
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
+            ws.binaryType = 'blob';
+            ws.onmessage = function(event) {
+                const url = URL.createObjectURL(event.data);
+                img.src = url;
+                img.onload = () => URL.revokeObjectURL(url);
+            };
+            ws.onclose = function() {
+                isStreamActive = false;
+            };
+        }
+
+        function stopStream() {
+            if (!isStreamActive) return;
+            isStreamActive = false;
+            
+            if (ws) ws.close();
+            
+            document.getElementById('videoMessage').style.display = 'block';
+            document.getElementById('streamIndicator').innerText = 'OFFLINE';
+            document.getElementById('streamIndicator').style.color = 'var(--text-muted)';
+
+            
+            const container = document.getElementById('streamImageContainer');
+            container.innerHTML = '';
+        }
+
+        setInterval(fetchStatus, 1000);
+        fetchStatus();
+    </script>
+</body>
+</html>

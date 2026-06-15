@@ -1,0 +1,13 @@
+{
+  "name": "maple",
+  "version": "1.0.0",
+  "description": "An Android Termux Node.js-based tool with a simple dashboard for Roblox account botting, monitoring, and management.",
+  "main": "maple.js",
+  "scripts": {
+    "start": "node maple.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.21.0"
+  }
+}
