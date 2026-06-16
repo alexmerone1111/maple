@@ -47,6 +47,13 @@ process.stderr.write = (chunk, encoding, callback) => {
     return originalStderrWrite(chunk, encoding, callback);
 };
 
+['log', 'info', 'warn', 'error'].forEach((method) => {
+    const orig = console[method];
+    console[method] = function(...args) {
+        orig(`[${new Date().toLocaleString()}]`, ...args);
+    };
+});
+
 wss.on('connection', (ws, req) => {
     const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     
@@ -454,7 +461,7 @@ app.post('/api/start', async (req, res) => {
 app.post('/api/healthcheck', (req, res) => {
     if (!isRunning) return res.json({ message: 'Not running.' });
 
-    console.log(`[${new Date().toLocaleTimeString()}] Heartbeat received!`);
+    console.log('Heartbeat received!');
     retryCount = 0;
     isConnecting = false;
 

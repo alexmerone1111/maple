@@ -832,6 +832,21 @@
             ws.onerror = (error) => {
                 console.error(`WebSocket error for terminal ${id}:`, error);
             };
+
+            ws.onclose = () => {
+                if (isLive) {
+                    term.writeln('\x1b[31m\r\n[CONNECTION LOST] LIVE terminal stream disconnected. Please refresh the page.\x1b[0m\r\n');
+                }
+            };
+
+            if (isLive) {
+                const pingInterval = setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send('PING');
+                    }
+                }, 15000);
+                ws.addEventListener('close', () => clearInterval(pingInterval));
+            }
             
             term.onData(data => {
                 if (!isLive && ws.readyState === WebSocket.OPEN) {
