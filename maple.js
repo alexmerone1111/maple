@@ -19,11 +19,49 @@ const wss = new WebSocket.Server({ server });
 let isStreaming = false;
 let isConnecting = false;
 
+const logHistory = [];
+const MAX_HISTORY = 200;
+
+function broadcastToLiveTerminal(chunk) {
+    const str = chunk.toString();
+    logHistory.push(str);
+    if (logHistory.length > MAX_HISTORY) logHistory.shift();
+    
+    wss.clients.forEach(client => {
+        if (client.isLiveTerminal && client.readyState === WebSocket.OPEN) {
+            client.send(str);
+        }
+    });
+}
+
+const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+const originalStderrWrite = process.stderr.write.bind(process.stderr);
+
+process.stdout.write = (chunk, encoding, callback) => {
+    broadcastToLiveTerminal(chunk);
+    return originalStdoutWrite(chunk, encoding, callback);
+};
+
+process.stderr.write = (chunk, encoding, callback) => {
+    broadcastToLiveTerminal(chunk);
+    return originalStderrWrite(chunk, encoding, callback);
+};
+
 wss.on('connection', (ws, req) => {
-    const reqUrl = url.parse(req.url, true);
+    const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    
+    if (reqUrl.pathname === '/terminal/live') {
+        ws.isLiveTerminal = true;
+        logHistory.forEach(msg => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(msg);
+            }
+        });
+        return;
+    }
     
     if (reqUrl.pathname === '/terminal') {
-        const id = reqUrl.query.id;
+        const id = reqUrl.searchParams.get('id');
         ws.isTerminal = true;
         ws.terminalId = id;
         const ptyProcess = terminalSessions[id];

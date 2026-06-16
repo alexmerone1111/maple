@@ -720,7 +720,26 @@
             switchTerminalGroup(groupId);
         }
 
-        async function mountTerminal(id, titleText, group) {
+        async function createLiveTerminalSession() {
+            const id = 'live';
+            const groupId = 'live';
+            const titleText = 'LIVE';
+            const groupColor = '#356b3e';
+            
+            const group = {
+                id: groupId,
+                title: titleText,
+                color: groupColor,
+                terminals: [],
+                isLive: true
+            };
+            terminalGroups.push(group);
+            
+            await mountTerminal(id, titleText, group, true);
+            switchTerminalGroup(groupId);
+        }
+
+        async function mountTerminal(id, titleText, group, isLive = false) {
             const dropdownMenu = document.getElementById('terminalDropdownMenu');
             const dropdownItem = document.createElement('div');
             dropdownItem.className = 'console-tab';
@@ -757,7 +776,9 @@
             termWrapper.appendChild(termContainer);
             
             const term = new window.Terminal({
-                cursorBlink: true,
+                cursorBlink: !isLive,
+                disableStdin: isLive,
+                convertEol: isLive,
                 theme: { background: '#000000', foreground: '#f8f8f2' },
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: 12,
@@ -778,9 +799,10 @@
             });
 
             term.writeln(`Welcome to ${titleText}`);
-            term.write('\r\n$ ');
+            if (!isLive) term.write('\r\n$ ');
             
             term.onData(event => {
+                if (isLive) return;
                 switch (event) {
                     case '\r': 
                         term.write('\r\n$ ');
@@ -852,6 +874,7 @@
                 document.getElementById('activeTerminalLabel').textContent = terminalSessions[lastSessionId].title;
                 activeSessionId = lastSessionId;
             }
+            updateTerminalHeaderUI();
         }
 
         function updateTerminalHeaderUI() {
@@ -865,14 +888,15 @@
                 label.style.display = 'flex';
             } else {
                 dropdownBtn.style.display = 'none';
-                if (count === 1) {
-                    label.style.display = 'flex';
-                } else {
-                    label.style.display = 'none';
-                }
+                label.style.display = count === 1 ? 'flex' : 'none';
             }
             
-            killBtn.style.display = count > 0 ? 'flex' : 'none';
+            const group = activeGroupId ? terminalGroups.find(terminalGroup => terminalGroup.id === activeGroupId) : null;
+            if (group && group.isLive) {
+                killBtn.style.display = 'none';
+            } else {
+                killBtn.style.display = count > 0 ? 'flex' : 'none';
+            }
         }
 
         function toggleTerminalDropdown() {
@@ -883,7 +907,7 @@
         async function killActiveTerminal() {
             if (!activeGroupId) return;
             const group = terminalGroups.find(terminalGroup => terminalGroup.id === activeGroupId);
-            if (!group) return;
+            if (!group || group.isLive) return;
 
             if (group.terminals.length > 0) {
                 const idToKill = group.terminals.pop();
@@ -972,7 +996,7 @@
                 }
             });
 
-            createTerminalSession('root');
+            createLiveTerminalSession();
         });
 
         function toggleConsoleFullscreen() {

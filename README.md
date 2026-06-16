@@ -7,7 +7,7 @@ Requires root & ADB access. The Web UI & HF-Space dashboard deployment for this 
 [![Node](https://img.shields.io/badge/Node.js-18.x-green?logo=node.js&style=for-the-badge)](https://nodejs.org/)
 [![Python](https://img.shields.io/badge/Python-3.9+-yellow?logo=python&logoColor=white&style=for-the-badge)](https://www.python.org/)
 
-![dashboard](https://github.com/alexmerone1111/MAPLE/raw/main/dashboard/ui.png?raw=true)
+![dashboard](https://github.com/bartholomort/MAPLE/raw/main/dashboard/ui.png?raw=true)
 
 ## DEPLOYMENT & SETUP
 
@@ -25,7 +25,7 @@ BEFORE YOU PROCEED, MAKE SURE YOUR DEVICE IS ROOTED!
 To install dependencies, clone the repository, and start the server, open **Termux** on your cloud device and paste the following setup command:
 
 ```bash
-sed -i 's@https://[^/ ]*/\(termux/\|\)apt@https://packages.termux.dev/apt@g' $PREFIX/etc/apt/sources.list $PREFIX/etc/apt/sources.list.d/*.list 2>/dev/null; pkg update -y -o Dpkg::Options::="--force-confold" && pkg install -y -o Dpkg::Options::="--force-confold" git nodejs root-repo python make clang && mkdir -p ~/.gyp && echo '{"variables": {"android_ndk_path": ""}}' > ~/.gyp/include.gypi && rm -rf MAPLE && git clone https://github.com/alexmerone1111/MAPLE.git && cd MAPLE && npm install && (killall node 2>/dev/null || true) && npm start
+sed -i 's@https://[^/ ]*/\(termux/\|\)apt@https://packages.termux.dev/apt@g' $PREFIX/etc/apt/sources.list $PREFIX/etc/apt/sources.list.d/*.list 2>/dev/null; pkg update -y -o Dpkg::Options::="--force-confold" && pkg install -y -o Dpkg::Options::="--force-confold" git nodejs root-repo python make clang && mkdir -p ~/.gyp && echo '{"variables": {"android_ndk_path": ""}}' > ~/.gyp/include.gypi && rm -rf MAPLE && git clone https://github.com/bartholomort/MAPLE.git && cd MAPLE && npm install && (killall node 2>/dev/null || true) && npm start
 ```
 
 If you ever need to manually restart the backend on your cloud device:
