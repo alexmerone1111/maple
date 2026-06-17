@@ -130,10 +130,10 @@ wss.on('connection', (ws, req) => {
     }
 
     ws.on('close', () => {
-        console.log('Client disconnected from Roblox screen stream');
+        console.log('Client disconnected from the cloud device stream.');
         const hasStreamClients = Array.from(wss.clients).some(c => !c.isTerminal);
         if (!hasStreamClients) {
-            console.log('No more Roblox clients open. Stopping cloud device screen stream...');
+            console.log('No more Roblox app clients open. Stopping cloud device stream...');
             isStreaming = false;
         }
     });
