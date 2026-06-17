@@ -1,5 +1,5 @@
 --[[
-	MAPLE Lua Heartbeat Example:
+	HEARTBEAT MODULE:
 	- Automatically communicates with the MAPLE local backend on your device to manage your Roblox instance.
 	
 	API:
@@ -8,22 +8,22 @@
 	- `Heartbeat.Stop()` : Safely disconnects all listeners, stops threads, and resets state.
 	- `Heartbeat.CleanupState()` : Internal method to force cleanup of connections and threads.
 	
-	Implementation:
+	EXAMPLE:
 	-- 1. Load and Start
-    ```lua
+	```lua
 	pcall(function()
 		getgenv().HeartbeatModule = loadstring(game:HttpGet("RAW_SCRIPT_URL"))()
 		getgenv().HeartbeatModule.Start(60)
 	end)
-    ```
-
+	```
+	
 	-- 2. Cleanup & Stop
-    ```lua
+	```lua
 	if type(getgenv().HeartbeatModule) == "table" then
 		pcall(getgenv().HeartbeatModule.Stop)
 		getgenv().HeartbeatModule = nil
 	end
-    ```
+	```
 ]]
 
 local HttpService = game:GetService("HttpService")
@@ -55,8 +55,7 @@ local Heartbeat = {
 		Kill = "http://127.0.0.1:3000/api/kill"
 	},
 
-	-- Dictionary keyed by error code for O(1) lookup
-	-- Each entry maps to { Endpoint, MatchText }
+	-- Dictionary keyed by error code for O(1) lookup. Each entry maps to { Endpoint, MatchText }.
 	ErrorCases = {
 		-- Kill Cases
 		["268"] = { Endpoint = "Kill", MatchText = "You have been kicked due to unexpected client behavior." },
@@ -148,23 +147,31 @@ function Heartbeat.SendEndpointRequest(EndpointUrl, Reason)
 	Heartbeat.CleanupState()
 end
 
----Processes the extracted text from a Roblox ErrorPrompt, matches it against known cases,
----and fires the corresponding API endpoint.
+---Processes the extracted text from a Roblox ErrorPrompt, matches it against known cases, and fires the corresponding API endpoint.
 ---@param PromptText string
 function Heartbeat.ProcessDisconnectMessage(PromptText)
-	local ErrorCode = string.match(PromptText, "Error Code:%s*(%d+)")
-	if not ErrorCode then
-		Heartbeat.SendEndpointRequest(Heartbeat.Endpoints.Relaunch, "Unknown ErrorPrompt: " .. PromptText)
-		return
-	end
+	task.spawn(function()
+		-- Wait 60s (or whatever you choose) to filter out ghost ErrorPrompts caused by successful teleport teardowns in some executor environments. If teleport succeeds, this thread is destroyed. If it's a real crash, it fires after 60s.
+		task.wait(60)
 
-	local CaseData = Heartbeat.ErrorCases[ErrorCode]
-	if CaseData and string.find(PromptText, CaseData.MatchText, 1, true) then
-		Heartbeat.SendEndpointRequest(Heartbeat.Endpoints[CaseData.Endpoint], CaseData.Endpoint .. " Case Matched: " .. ErrorCode)
-		return
-	end
+		if not Heartbeat.IsRunning or Heartbeat.HasFiredEndpoint then
+			return
+		end
 
-	Heartbeat.SendEndpointRequest(Heartbeat.Endpoints.Relaunch, "Unrecognized Error Code: " .. ErrorCode)
+		local ErrorCode = string.match(PromptText, "Error Code:%s*(%d+)")
+		if not ErrorCode then
+			Heartbeat.SendEndpointRequest(Heartbeat.Endpoints.Relaunch, "Unknown ErrorPrompt: " .. PromptText)
+			return
+		end
+
+		local CaseData = Heartbeat.ErrorCases[ErrorCode]
+		if CaseData and string.find(PromptText, CaseData.MatchText, 1, true) then
+			Heartbeat.SendEndpointRequest(Heartbeat.Endpoints[CaseData.Endpoint], CaseData.Endpoint .. " Case Matched: " .. ErrorCode)
+			return
+		end
+
+		Heartbeat.SendEndpointRequest(Heartbeat.Endpoints.Relaunch, "Unrecognized Error Code: " .. ErrorCode)
+	end)
 end
 
 ---Starts the healthcheck loop that continuously pings the backend.
@@ -240,12 +247,13 @@ function Heartbeat.StartErrorListeners()
 	end))
 
 	Heartbeat.RegisterConnection(DescendantAddedConnection)
-
+---Uncommenting below will send the "Relaunch" command the second it detects TeleportInitFailed
+--[[
 	local TeleportFailedConnection = TeleportService.TeleportInitFailed:Connect(LPH_NO_VIRTUALIZE(function(Player, TeleportResult, ErrorMessage)
 		Heartbeat.SendEndpointRequest(Heartbeat.Endpoints.Relaunch, "TeleportInitFailed: " .. tostring(ErrorMessage))
 	end))
-
 	Heartbeat.RegisterConnection(TeleportFailedConnection)
+]]
 end
 
 ---Starts the heartbeat module, healthcheck thread, and error listeners.

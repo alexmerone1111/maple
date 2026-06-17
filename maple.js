@@ -103,7 +103,7 @@ wss.on('connection', (ws, req) => {
         return;
     }
 
-    console.log('Client connected to WebSocket stream');
+    console.log('Client connected to cloud device stream');
 
     if (!isStreaming) {
         isStreaming = true;
@@ -130,10 +130,10 @@ wss.on('connection', (ws, req) => {
     }
 
     ws.on('close', () => {
-        console.log('Client disconnected from stream');
+        console.log('Client disconnected from Roblox screen stream');
         const hasStreamClients = Array.from(wss.clients).some(c => !c.isTerminal);
         if (!hasStreamClients) {
-            console.log('No more stream clients, stopping stream...');
+            console.log('No more Roblox clients open. Stopping cloud device screen stream...');
             isStreaming = false;
         }
     });
@@ -223,7 +223,7 @@ function loadAccounts() {
             accounts = accounts.map(account => ({ username: account.username }));
             console.log(`Loaded ${accounts.length} accounts from accounts.json.`);
         } else {
-            console.log('No accounts.json found, starting with empty vault.');
+            console.log('No accounts.json found, starting with empty vault database.');
             accounts = [];
         }
     } catch (err) {
@@ -235,13 +235,13 @@ function loadAccounts() {
 loadAccounts();
 
 async function killRoblox() {
-    console.log('Force stopping Roblox...');
+    console.log('Force stopping the Roblox client...');
     await executeShell('su -c "am force-stop com.roblox.client"');
 }
 
 async function injectAndLaunch() {
     if (currentAccountIndex >= accounts.length) {
-        console.log('Out of accounts! Stopping automation.');
+        console.log('Out of valid accounts! Stopping automation.');
         stopAutomation();
         return;
     }
@@ -254,7 +254,7 @@ async function injectAndLaunch() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     if (!isRunning) return;
 
-    console.log(`Wiping current Roblox app data...`);
+    console.log(`Wiping the current Roblox app client data...`);
     if (!(await executeShell('su -c "pm clear com.roblox.client"'))) return handleCrash();
     if (!isRunning) return;
     
@@ -269,7 +269,7 @@ async function injectAndLaunch() {
     if (config.JOB_ID && config.JOB_ID.trim() !== '') {
         launchIntent += `&gameInstanceId=${config.JOB_ID.trim()}`;
     }
-    console.log(`Launching Roblox App into intent: ${launchIntent}...`);
+    console.log(`Launching Roblox app into the following intent: ${launchIntent}...`);
     if (!(await executeShell(`su -c "am start -a android.intent.action.VIEW -d '${launchIntent}'"`))) return handleCrash();
 
     startHeartbeatTimer();
@@ -403,20 +403,20 @@ app.post('/api/login_mode', async (req, res) => {
     await executeShell('su -c "am force-stop com.roblox.client"');
     await executeShell('su -c "pm clear com.roblox.client"');
     await executeShell('su -c "monkey -p com.roblox.client -c android.intent.category.LAUNCHER 1"');
-    res.json({ message: 'Login mode activated. Opening Native Roblox App...' });
+    res.json({ message: 'Login mode activated. Opening the native Roblox app client...' });
 });
 
 app.post('/api/save_account', (req, res) => {
     if (!isLoginMode) return res.status(400).json({ error: 'Not in login mode.' });
 
-    console.log(`Extracting username from Native App prefs...`);
+    console.log(`Extracting username from native Roblox app prefs...`);
     exec('su -c "cat /data/data/com.roblox.client/shared_prefs/prefs.xml"', async (err, stdout) => {
         const match = stdout ? stdout.match(/<string name="username">([^<]+)<.string>/) : null;
         const username = match ? match[1].trim() : null;
 
         if (!username) {
-            console.error('Failed to read username from prefs.xml:', err || 'Empty stdout');
-            return res.status(400).json({ error: 'No valid account found! Did you log in on the Native App?' });
+            console.error('Failed to read Roblox username from prefs.xml:', err || 'Empty stdout');
+            return res.status(400).json({ error: 'No valid account found! Did you log in on the native Roblox app?' });
         }
 
         const exists = accounts.find(account => account.username === username);
@@ -473,7 +473,7 @@ app.post('/api/cycle', (req, res) => {
     if (!isRunning) return res.json({ message: 'Not running.' });
 
     const reason = req.body.reason || 'Unknown';
-    console.log('Received cycle request. Reason: ' + reason);
+    console.log('Received cycle account request. Reason: ' + reason);
 
     if (heartbeatTimer) clearTimeout(heartbeatTimer);
     cycleAccount();
@@ -484,13 +484,13 @@ app.post('/api/cycle', (req, res) => {
 app.post('/api/relaunch', (req, res) => {
     if (!isRunning) return res.json({ message: 'Not running.' });
 
-    console.log('Received relaunch request. Relaunching current account...');
+    console.log('Received relaunch request. Relaunching the current account...');
     if (heartbeatTimer) clearTimeout(heartbeatTimer);
     
     retryCount = 0; 
     injectAndLaunch();
 
-    res.json({ message: 'Relaunching current account.' });
+    res.json({ message: 'Relaunching the current account.' });
 });
 
 app.post('/api/launch', async (req, res) => {
