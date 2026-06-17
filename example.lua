@@ -247,11 +247,13 @@ function Heartbeat.StartErrorListeners()
 	end))
 
 	Heartbeat.RegisterConnection(DescendantAddedConnection)
+	
 ---Uncommenting below will send the "Relaunch" command the second it detects TeleportInitFailed
 --[[
 	local TeleportFailedConnection = TeleportService.TeleportInitFailed:Connect(LPH_NO_VIRTUALIZE(function(Player, TeleportResult, ErrorMessage)
 		Heartbeat.SendEndpointRequest(Heartbeat.Endpoints.Relaunch, "TeleportInitFailed: " .. tostring(ErrorMessage))
 	end))
+
 	Heartbeat.RegisterConnection(TeleportFailedConnection)
 ]]
 end
